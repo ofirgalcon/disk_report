@@ -19,6 +19,7 @@ import subprocess
 import plistlib
 import sys
 import os
+import re
 
 # Skip manual check
 if len(sys.argv) > 1:
@@ -35,7 +36,7 @@ def _OSVersion():
     proc = subprocess.Popen(['/usr/bin/sw_vers','-productVersion'], stdout=subprocess.PIPE)
     output = proc.stdout.read()
 
-    return output.split('.')[1]
+    return re.search('(.*?\..*?)\.', output).group(1)
 
 def _DictFromDiskutilAPFSList():
     """calls diskutil apfs list.
@@ -122,7 +123,7 @@ def filteredDiskInfo(deviceid):
 def AllDisksAndPartitions():
     """Returns list of all disks and partitions."""
     try:
-        if _OSVersion() == "6":
+        if _OSVersion() == "10.6":
             return _DictFromDiskutilList_SnowLeopard()
         else:
             return _DictFromDiskutilList()["AllDisksAndPartitions"]
