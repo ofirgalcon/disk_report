@@ -1,4 +1,6 @@
-#!/usr/local/munkireport/munkireport-python2
+#!/usr/local/munkireport/munkireport-python3
+
+
 """Mac OS X Disk/Volume script for munkireport.
 https://github.com/munkireport/munkireport-php
 
@@ -17,26 +19,12 @@ Disk sizes are converted to strings with a precision of .5GB
 
 import subprocess
 import plistlib
-import sys
 import os
-import re
-
-# Skip manual check
-if len(sys.argv) > 1:
-    if sys.argv[1] == 'manualcheck':
-        print 'Manual check: skipping'
-        exit(0)
+import xml
 
 # Round to .5GB precision (29 bit)
 def _HalfGB(size):
     return size >> 29 << 29
-
-# Return OS X version
-def _OSVersion():
-    proc = subprocess.Popen(['/usr/bin/sw_vers','-productVersion'], stdout=subprocess.PIPE)
-    output = proc.stdout.read()
-
-    return re.search('(.*?\..*?)\.', output).group(1)
 
 def _DictFromDiskutilAPFSList():
     """calls diskutil apfs list.
@@ -50,22 +38,6 @@ def _DictFromDiskutilList():
 
     command = ["/usr/sbin/diskutil", "list", "-plist"]
     return _DictFromSubprocess(command)
-
-def _DictFromDiskutilList_SnowLeopard():
-    """as Snow Leopard delivers a different output from diskutil
-    list we will mimic the output from newer versions of OS X
-
-    """
-    Partitions = _DictFromDiskutilList()["AllDisks"]
-    DiskArray = []
-
-    for Partition in Partitions:
-        DiskArray.append(_DictFromDiskutilInfo(Partition))
-
-    plist = [{'Content':'Guid', 'Partitions':DiskArray,}]
-    plistfile = '%s/cache/SL_tmpdisk.plist' % os.path.dirname(os.path.realpath(__file__))
-    plistlib.writePlist(plist, plistfile)
-    return plistlib.readPlist(plistfile)
 
 def _DictFromDiskutilInfo(deviceid):
     """calls diskutil info for a specific device id.
@@ -123,14 +95,10 @@ def filteredDiskInfo(deviceid):
 def AllDisksAndPartitions():
     """Returns list of all disks and partitions."""
     try:
-        if _OSVersion() == "10.6":
-            return _DictFromDiskutilList_SnowLeopard()
-        else:
-            return _DictFromDiskutilList()["AllDisksAndPartitions"]
+        return _DictFromDiskutilList()["AllDisksAndPartitions"]
     except KeyError:
         # TODO(user): fix errors to actually provide info...
         raise Exception("Unable to list all partitions.")
-
 
 def _DictFromSubprocess(command, stdin=None):
     """returns a dict based upon a subprocess call with a -plist argument.
@@ -150,12 +118,12 @@ def _DictFromSubprocess(command, stdin=None):
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = p.communicate()
 
-    if p.returncode is not 0:
+    if p.returncode != 0:
         raise Exception("Error running command: %s, stderr: %s" %
                                              (command, stderr))
     else:
         try:
-            return plistlib.readPlistFromString(stdout)
+            return plistlib.loads(stdout)
         except xml.parsers.expat.ExpatError:
             raise Exception("Error creating plist from output: %s" % stdout)
 
@@ -166,11 +134,13 @@ def _isDiskImage(diskInfo):
     return False
 
 def add_apfs_info(volumeList, disk):
-    if not getattr(disk, 'APFSVolumes', None):
+    if 'APFSVolumes' not in disk:
         return
     skipTheseMountpoints = ['/System/Volumes/Preboot','/System/Volumes/VM',
-        '/System/Volumes/Update', '/private/var/vm']
-    for apfsvolume in disk.APFSVolumes:
+        '/System/Volumes/Update', '/private/var/vm', '/System/Volumes/xarts',
+        '/System/Volumes/iSCPreboot', '/System/Volumes/Update/SFR/mnt1', '/System/Volumes/Update/mnt1',
+        '/System/Volumes/Hardware', '/System/Volumes/Data']
+    for apfsvolume in disk['APFSVolumes']:
         mountpoint = apfsvolume.get('MountPoint')
         if mountpoint and mountpoint not in skipTheseMountpoints:
             deviceId = apfsvolume['DeviceIdentifier']
@@ -189,41 +159,41 @@ def DiskReport():
     searchCS = False
     for disk in AllDisksAndPartitions():
         add_apfs_info(volumeList, disk)
-        if getattr(disk, 'Partitions', None):
-            for partition in disk.Partitions:
+        if 'Partitions' in disk:
+            for partition in disk['Partitions']:
 
-                if partition.Content == 'Apple_HFS' and partition.get('MountPoint'):
-                    diskInfo = filteredDiskInfo(partition.DeviceIdentifier)
+                if partition['Content'] == 'Apple_HFS' and partition.get('MountPoint'):
+                    diskInfo = filteredDiskInfo(partition['DeviceIdentifier'])
                     if _isDiskImage(diskInfo):
                         # Skip Disk Images
                         continue
                     volumeList.append(diskInfo)
 
-                elif partition.Content == 'Apple_CoreStorage':
-                    diskInfo = filteredDiskInfo(partition.DeviceIdentifier)
+                elif partition['Content'] == 'Apple_CoreStorage':
+                    diskInfo = filteredDiskInfo(partition['DeviceIdentifier'])
                     if diskInfo.get('CoreStorageLVGUUID'):
                         coreStorageDict[diskInfo['CoreStorageLVGUUID']] = diskInfo
                     else:
                         # get CoreStorageLVGUUID
                         searchCS = True
-                        csInfo = _DictFromDiskutilCsInfo(partition.DeviceIdentifier)
+                        csInfo = _DictFromDiskutilCsInfo(partition['DeviceIdentifier'])
                         if csInfo.get('MemberOfCoreStorageLogicalVolumeGroup'):
                             coreStorageDict[csInfo['MemberOfCoreStorageLogicalVolumeGroup']] = diskInfo
                         else:
-                            raise Exception("No CS info found for %s" % partition.DeviceIdentifier)
+                            raise Exception("No CS info found for %s" % partition['DeviceIdentifier'])
 
 
-                elif partition.Content == 'Apple_RAID':
-                    diskInfo = filteredDiskInfo(partition.DeviceIdentifier)
+                elif partition['Content'] == 'Apple_RAID':
+                    diskInfo = filteredDiskInfo(partition['DeviceIdentifier'])
                     appleRaidDict[diskInfo['RAIDMemberUUID']] = diskInfo
 
-                elif partition.Content == 'Microsoft Basic Data':
-                    diskInfo = filteredDiskInfo(partition.DeviceIdentifier)
+                elif partition['Content'] == 'Microsoft Basic Data':
+                    diskInfo = filteredDiskInfo(partition['DeviceIdentifier'])
                     volumeList.append(diskInfo)
 
         else:
-            if disk.Content == 'Apple_HFS' and disk.get('MountPoint'):
-                diskInfo = filteredDiskInfo(disk.DeviceIdentifier)
+            if disk['Content'] == 'Apple_HFS' and disk.get('MountPoint'):
+                diskInfo = filteredDiskInfo(disk['DeviceIdentifier'])
 
                 if _isDiskImage(diskInfo):
                     # Skip Disk Images
@@ -235,12 +205,12 @@ def DiskReport():
                     diskInfo.update({'SMARTStatus': pv['SMARTStatus']})
 
                 if searchCS:
-                    csInfo = _DictFromDiskutilCsInfo(disk.DeviceIdentifier)
+                    csInfo = _DictFromDiskutilCsInfo(disk['DeviceIdentifier'])
                     if csInfo.get('MemberOfCoreStorageLogicalVolumeGroup'):
                         pv = coreStorageDict[csInfo['MemberOfCoreStorageLogicalVolumeGroup']]
                         diskInfo.update({'SMARTStatus': pv['SMARTStatus']})
                     else:
-                        raise Exception("No CS info found for %s" % disk.DeviceIdentifier)
+                        raise Exception("No CS info found for %s" % disk['DeviceIdentifier'])
 
 
                 if diskInfo.get('RAIDSetMembers', 0):
@@ -256,10 +226,9 @@ def DiskReport():
 
     return volumeList
 
-# Create cache dir if it does not exist
-cachedir = '%s/cache' % os.path.dirname(os.path.realpath(__file__))
-if not os.path.exists(cachedir):
-    os.makedirs(cachedir)
+result = DiskReport()
 
 # Write disk report to cache
-plistlib.writePlist(DiskReport(), "%s/disk.plist" % cachedir)
+cachedir = '%s/cache' % os.path.dirname(os.path.realpath(__file__))
+with open("%s/disk.plist" % cachedir, 'wb') as fp:
+    plistlib.dump(DiskReport(), fp)
