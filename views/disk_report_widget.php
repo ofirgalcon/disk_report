@@ -1,39 +1,28 @@
-		<div class="col-lg-4 col-md-6">
-
-			<div class="card">
-
-				<div class="card-header">
-
-					<i class="fa fa-hdd-o"></i>
-					    <span data-i18n="free_disk_space"></span>
-					    <a href="/show/listing/disk_report/disk" class="pull-right"><i class="fa fa-list"></i></a>
-					
-
-				</div>
-
-				<div class="card-body text-center">
-
-
-					<a id="disk-danger" class="btn btn-danger hide">
-						<span class="disk-count bigger-150"></span><br>
-						<span class="disk-label"></span>
-					</a>
-					<a id="disk-warning" class="btn btn-warning hide">
-						<span class="disk-count bigger-150"></span><br>
-						<span class="disk-label"></span>
-					</a>
-					<a id="disk-success" class="btn btn-success hide">
-						<span class="disk-count bigger-150"></span><br>
-						<span class="disk-label"></span>
-					</a>
-
-          <span id="disk-nodata" data-i18n="no_clients"></span>
-
-				</div>
-
-			</div><!-- /panel -->
-
-		</div><!-- /col -->
+<div class="col-lg-4 col-md-6">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title"><i class="fa fa-hdd-o"></i>
+            <span data-i18n="free_disk_space"></span>
+            <list-link data-url="/show/listing/disk_report/disk"></list-link>
+            </h3>
+        </div>
+        <div class="panel-body text-center">
+            <a id="disk-danger" class="btn btn-danger hide">
+                <span class="disk-count bigger-150"></span><br>
+                <span class="disk-label"></span>
+            </a>
+            <a id="disk-warning" class="btn btn-warning hide">
+                <span class="disk-count bigger-150"></span><br>
+                <span class="disk-label"></span>
+            </a>
+            <a id="disk-success" class="btn btn-success hide">
+                <span class="disk-count bigger-150"></span><br>
+                <span class="disk-label"></span>
+            </a>
+            <span id="disk-nodata" data-i18n="no_clients"></span>
+        </div>
+    </div><!-- /panel -->
+</div><!-- /col -->
 
 <script>
 $(document).on('appUpdate', function(e, lang) {
