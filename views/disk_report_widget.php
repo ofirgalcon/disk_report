@@ -29,27 +29,27 @@ $(document).on('appUpdate', function(e, lang) {
 
     $.getJSON( appUrl + '/module/disk_report/get_stats', function( data ) {
 
-    	if(data.error){
-    		//alert(data.error);
-    		return;
-    	}
+        if(data.error){
+            //alert(data.error);
+            return;
+        }
 
-			// Get limits
-			var dangerThreshold = data.thresholds.danger+'GB',
-					warningThreshhold = data.thresholds.warning+'GB',
-					url = appUrl + '/show/listing/disk_report/disk#'
+            // Get limits
+            var dangerThreshold = data.thresholds.danger+'GB',
+                    warningThreshhold = data.thresholds.warning+'GB',
+                    url = appUrl + '/show/listing/disk_report/disk#'
 
-			// Set urls
-			$('#disk-danger').attr('href', url + encodeURIComponent('freespace < '+dangerThreshold))
-			$('#disk-warning').attr('href', url + encodeURIComponent(dangerThreshold+' freespace '+warningThreshhold))
-			$('#disk-success').attr('href', url + encodeURIComponent('freespace > '+warningThreshhold))
+            // Set urls
+            $('#disk-danger').attr('href', url + encodeURIComponent('freespace < '+dangerThreshold))
+            $('#disk-warning').attr('href', url + encodeURIComponent(dangerThreshold+' freespace '+warningThreshhold))
+            $('#disk-success').attr('href', url + encodeURIComponent('freespace > '+warningThreshhold))
 
-			// Set labels
-			$('#disk-danger span.disk-label').text('< '+dangerThreshold)
-			$('#disk-warning span.disk-label').text('< '+warningThreshhold)
-			$('#disk-success span.disk-label').text(warningThreshhold+' +')
+            // Set labels
+            $('#disk-danger span.disk-label').text('< '+dangerThreshold)
+            $('#disk-warning span.disk-label').text('< '+warningThreshhold)
+            $('#disk-success span.disk-label').text(warningThreshhold+' +')
 
-			// encodeURIComponent
+            // encodeURIComponent
 
         // Show no clients span
         $('#disk-nodata').removeClass('hide');

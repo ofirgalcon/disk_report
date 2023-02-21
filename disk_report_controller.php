@@ -61,9 +61,9 @@ class Disk_report_controller extends Module_controller
     public function get_volume_type()
     {
         jsonView(
-            Disk_report_model::selectRaw("COUNT(CASE WHEN volumetype = 'APFS' THEN 1 END) AS apfs")
+            Disk_report_model::selectRaw("COUNT(CASE WHEN volumetype LIKE '%APFS%' THEN 1 END) AS apfs")
                 ->selectRaw("COUNT(CASE WHEN volumetype = 'bootcamp' THEN 1 END) AS bootcamp")
-                ->selectRaw("COUNT(CASE WHEN volumetype = 'Journaled HFS+' THEN 1 END) AS hfs")
+                ->selectRaw("COUNT(CASE WHEN volumetype LIKE '%HFS%' THEN 1 END) AS hfs")
                 ->filter()
                 ->first()
                 ->toLabelCount()
