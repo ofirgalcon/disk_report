@@ -20,7 +20,7 @@ $(document).on('appUpdate', function(e, lang) {
     		return;
     	}
 
-		var panel = $('#global-disk-usage-widget div.card-body'),
+		var panel = $('#global-disk-usage-widget div.panel-body'),
 		baseUrl = appUrl + '/show/listing/disk_report/disk';
 		panel.empty();
 
