@@ -139,7 +139,7 @@ def add_apfs_info(volumeList, disk):
     skipTheseMountpoints = ['/System/Volumes/Preboot','/System/Volumes/VM',
         '/System/Volumes/Update', '/private/var/vm', '/System/Volumes/xarts',
         '/System/Volumes/iSCPreboot', '/System/Volumes/Update/SFR/mnt1', '/System/Volumes/Update/mnt1',
-        '/System/Volumes/Hardware', '/System/Volumes/Data', '/System/Volumes/Recovery']
+        '/System/Volumes/Hardware', '/System/Volumes/Data', '/System/Volumes/Recovery', '/Volumes/Recovery']
     for apfsvolume in disk['APFSVolumes']:
         mountpoint = apfsvolume.get('MountPoint')
         if mountpoint and mountpoint not in skipTheseMountpoints:

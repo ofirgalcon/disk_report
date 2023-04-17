@@ -19,8 +19,8 @@ var drawStoragePlots = function(serialNumber, divid) {
     var chart;
     d3.json(url, function(err, data){
 
-        var height = 300;
-        var width = 250;
+        var height = 400;
+        var width = 500;
         var siFormat = d3.format('0.2s');
         var format = function(d){ return siFormat(d) + 'B'}
 
@@ -37,7 +37,7 @@ var drawStoragePlots = function(serialNumber, divid) {
                             .attr('class', 'col-sm-6')
 
             info.append('h4')
-                .text(obj.volumename)
+                .text(obj.volumename+" - "+fileSize(obj.totalsize, 1))
 
             var table = info.append('table')
                             .attr('class', 'table table-striped')
@@ -58,6 +58,14 @@ var drawStoragePlots = function(serialNumber, divid) {
                 {
                     key: i18n.t('disk_report.media_type'),
                     val: obj.media_type && obj.media_type.toUpperCase()
+                },
+                {
+                    key: i18n.t('disk_report.used'),
+                    val: (fileSize(obj.totalsize - obj.freespace, 1)+" ("+obj.percentage+"%)")
+                },
+                {
+                    key: i18n.t('disk_report.free'),
+                    val: (fileSize(obj.freespace, 1)+" ("+(100-obj.percentage)+"%)")
                 },
                 {
                     key: i18n.t('disk_report.volume_type'),
@@ -112,16 +120,16 @@ var drawStoragePlots = function(serialNumber, divid) {
             }
 
             var tr = table.selectAll("tr")
-                            .data(props)
-                            .enter().append("tr")
-                            .html(function(d) { return '<th>'+d.key+'</th><td>'+d.val+'</td>'; })
+                .data(props)
+                .enter().append("tr")
+                .html(function(d) { return '<th>'+d.key+'</th><td>'+d.val+'</td>'; })
 
             row.append('div')
-                    .attr('class', 'col-sm-6')
-                        .append('svg')
-                        .attr('id', id)
-                        .attr('class', 'pull-right')
-
+                .attr('class', 'col-sm-4')
+                    .style('height', height+"px")
+                    .append('svg')
+                    .attr('id', id)
+                    .attr('class', 'pull-right')
 
             // Filter data
             var fill = [
@@ -141,26 +149,23 @@ var drawStoragePlots = function(serialNumber, divid) {
                     .y(function(d) { return d.cnt })
                     .showLabels(true)
                     .valueFormat(format)
+                    .height(300)
                     .donut(true)
                     .labelsOutside(true)
                     .labelType('value');
 
                 chart.title(format(obj.totalsize));
 
-                //chart.pie.donut(true);
-
                 d3.select("#"+id)
-                    .style('height', height)
-                    .style('width', width)
                     .datum(fill)
                     .transition().duration(1200)
+                    .style('height', height+"px")
                     .call(chart);
 
                 // Remove fill from labels
                 d3.selectAll('#'+id+' .nv-pieLabels text').style('fill', null);
 
                 return chart;
-
             });
         });
     });
